@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Probability by Mr. M</title>
+    <meta name="description" content="Market Probability by Mr. M">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+/* ── Reset & Base ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --bg: #F7F8FA; --surface: #FFFFFF; --border: #E5E7EB; --border-light: #F3F4F6;
+    --text-primary: #111827; --text-secondary: #4B5563; --text-tertiary: #9CA3AF;
+    --accent: #6366F1; --accent-light: #EEF2FF;
+    --green: #059669; --green-bg: #ECFDF5; --green-border: #A7F3D0;
+    --red: #DC2626; --red-bg: #FEF2F2;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04); --shadow-md: 0 4px 12px rgba(0,0,0,0.06); --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+}
+html { font-size: 15px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; line-height: 1.5; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── App Container ── */
+.app { max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; }
+
+/* ── Header ── */
+.header { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.header-left { display: flex; align-items: center; }
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon { width: 36px; height: 36px; flex-shrink: 0; }
+.logo-text h1 { font-size: 1.15rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; line-height: 1.2; }
+.logo-sub { font-size: 0.72rem; color: var(--text-tertiary); font-weight: 400; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.live-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; background: var(--green-bg); font-size: 0.68rem; font-weight: 600; color: var(--green); letter-spacing: 0.05em; }
+.live-badge.error { background: var(--red-bg); color: var(--red); }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s ease-in-out infinite; }
+.live-badge.error .live-dot { background: var(--red); animation: none; }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+.refresh-badge { display: flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 20px; background: var(--border-light); font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; border: none; font-family: 'Inter', sans-serif; }
+.refresh-badge:hover { background: #E5E7EB; color: var(--text-primary); }
+.refresh-badge.reloading svg { animation: spin 1s linear infinite; }
+
+/* ── Asset Navigation ── */
+.asset-nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.asset-btn { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); cursor: pointer; transition: all 0.2s ease; font-family: inherit; font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); box-shadow: var(--shadow-sm); }
+.asset-btn:hover { border-color: var(--accent); color: var(--accent); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.asset-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.btn-icon { font-size: 1.1rem; }
+.btn-ticker { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 500; padding: 2px 6px; border-radius: 4px; background: var(--border-light); color: var(--text-tertiary); }
+.asset-btn.active .btn-ticker { background: rgba(99, 102, 241, 0.15); color: var(--accent); }
+
+/* ── Price Card ── */
+.price-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px 24px; margin-bottom: 16px; box-shadow: var(--shadow-sm); animation: fadeSlideIn 0.3s ease; }
+.price-card-inner { display: flex; align-items: center; justify-content: space-between; }
+.price-asset-name { font-size: 0.78rem; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.price-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.03em; font-family: 'JetBrains Mono', 'Inter', monospace; }
+.price-right { text-align: right; }
+.price-change { font-size: 1rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; padding: 4px 12px; border-radius: 6px; display: inline-block; margin-bottom: 4px; }
+.price-change.up { color: var(--green); background: var(--green-bg); }
+.price-change.down { color: var(--red); background: var(--red-bg); }
+.price-updated { font-size: 0.7rem; color: var(--text-tertiary); }
+
+/* ── Table Card ── */
+.table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 16px; box-shadow: var(--shadow-sm); overflow: hidden; animation: fadeSlideIn 0.4s ease; }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border-light); }
+.card-title { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); }
+.card-source { font-size: 0.7rem; color: var(--text-tertiary); font-weight: 400; }
+.table-wrapper { position: relative; overflow-x: auto; padding: 0; }
+
+/* ── Probability Table ── */
+.prob-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.prob-table thead th { padding: 12px 16px; text-align: center; font-size: 0.72rem; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); background: var(--bg); white-space: nowrap; position: sticky; top: 0; z-index: 2; }
+.prob-table thead th:first-child { text-align: left; padding-left: 24px; }
+.prob-table tbody td { padding: 10px 16px; text-align: center; border-bottom: 1px solid var(--border-light); font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; font-weight: 500; color: var(--text-secondary); transition: background 0.15s ease; }
+.prob-table tbody td:first-child { text-align: left; padding-left: 24px; font-family: 'Inter', sans-serif; font-weight: 500; color: var(--text-primary); white-space: nowrap; }
+.prob-table tbody tr:hover td { background: rgba(99, 102, 241, 0.03); }
+.prob-table tbody tr:last-child td { border-bottom: none; }
+.prob-cell { display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 500; min-width: 56px; text-align: center; transition: transform 0.15s ease, box-shadow 0.15s ease; background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border-light); }
+.prob-cell:hover { transform: scale(1.05); box-shadow: var(--shadow-sm); }
+.prob-cell.up { background: var(--green-bg); color: var(--green); border-color: var(--green-bg); }
+.prob-cell.down { background: var(--red-bg); color: var(--red); border-color: var(--red-bg); }
+.rank-badge { display: inline-block; width: 18px; height: 18px; line-height: 18px; border-radius: 50%; font-size: 0.6rem; font-weight: 700; text-align: center; margin-right: 6px; vertical-align: middle; font-family: 'Inter', sans-serif; }
+.rank-1 { background: #FEF3C7; color: #92400E; }
+.rank-2 { background: #E5E7EB; color: #4B5563; }
+.rank-3 { background: #FDE8D8; color: #9A3412; }
+.rank-4 { background: #F3F4F6; color: #6B7280; }
+.rank-5 { background: #F9FAFB; color: #9CA3AF; }
+
+/* ── Loading ── */
+.loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; z-index: 10; backdrop-filter: blur(4px); transition: opacity 0.3s ease; }
+.loading-overlay.hidden { opacity: 0; pointer-events: none; }
+.spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 0.78rem; color: var(--text-tertiary); font-weight: 500; }
+
+/* ── No Data ── */
+.no-data-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 20px; color: var(--text-tertiary); }
+.no-data-state svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.4; }
+.no-data-text { font-size: 0.9rem; font-weight: 500; margin-bottom: 4px; }
+.no-data-sub { font-size: 0.78rem; }
+
+/* ── Toast ── */
+.toast { position: fixed; bottom: 24px; right: 24px; display: flex; align-items: center; gap: 8px; padding: 12px 18px; background: var(--red); color: white; border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); font-size: 0.8rem; font-weight: 500; opacity: 0; transform: translateY(12px); pointer-events: none; transition: all 0.3s ease; z-index: 999; }
+.toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+/* ── Footer ── */
+.footer { padding: 20px 0; text-align: center; font-size: 0.72rem; color: var(--text-tertiary); border-top: 1px solid var(--border-light); margin-top: 8px; line-height: 1.6; }
+
+/* ── Animations ── */
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .app { padding: 0 12px 24px; }
+    .header { padding: 14px 0 12px; }
+    .logo-text h1 { font-size: 1rem; }
+    .asset-nav { gap: 6px; }
+    .asset-btn { padding: 8px 12px; font-size: 0.8rem; }
+    .btn-label { display: none; }
+    .price-value { font-size: 1.5rem; }
+    .card-header { padding: 12px 16px; }
+    .prob-table thead th { padding: 10px 10px; font-size: 0.65rem; }
+    .prob-table tbody td { padding: 8px 10px; font-size: 0.72rem; }
+    .prob-table tbody td:first-child { padding-left: 16px; }
+    .prob-table thead th:first-child { padding-left: 16px; }
+}
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="#111827">
+                        <path d="M4 20h16v-2H4v2zm2-4h3V6H6v10zm5 0h3V10h-3v6zm5 0h3v-8h-3v8z" />
+                    </svg>
+                    <div class="logo-text">
+                        <h1>Market Probability</h1>
+                    </div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="live-badge" id="liveIndicator">
+                    <span class="live-dot"></span>
+                    <span>LIVE</span>
+                </div>
+                <button class="refresh-badge" id="refreshBtn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Asset Navigation -->
+        <nav class="asset-nav" id="assetTabs">
+            <button class="asset-btn active" data-asset="sp500" id="tab-sp500">
+                <span class="btn-icon">📈</span>
+                <span class="btn-label">S&P 500</span>
+                <span class="btn-ticker">SPX</span>
+            </button>
+            <button class="asset-btn" data-asset="gold" id="tab-gold">
+                <span class="btn-icon">🥇</span>
+                <span class="btn-label">Gold</span>
+                <span class="btn-ticker">GC</span>
+            </button>
+            <button class="asset-btn" data-asset="oil" id="tab-oil">
+                <span class="btn-icon">🛢️</span>
+                <span class="btn-label">Crude Oil</span>
+                <span class="btn-ticker">CL</span>
+            </button>
+            <button class="asset-btn" data-asset="bitcoin" id="tab-bitcoin">
+                <span class="btn-icon">₿</span>
+                <span class="btn-label">Bitcoin</span>
+                <span class="btn-ticker">BTC</span>
+            </button>
+        </nav>
+
+        <!-- Dashboard Content -->
+        <main class="dashboard" id="dashboard">
+            <!-- Price Header Card -->
+            <section class="price-card" id="priceCard">
+                <div class="price-card-inner">
+                    <div class="price-left">
+                        <div class="price-asset-name" id="priceAssetName">S&P 500</div>
+                        <div class="price-value" id="priceValue">—</div>
+                    </div>
+                    <div class="price-right">
+                        <div class="price-change" id="priceChange">—</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Probability Table Card -->
+            <section class="table-card" id="tableCard">
+                <div class="card-header">
+                    <h2 class="card-title" id="cardTitle">Market Probability</h2>
+                </div>
+                <div class="table-wrapper" id="tableWrapper">
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="spinner"></div>
+                        <span class="loading-text">Mengambil data probabilitas...</span>
+                    </div>
+                    <table class="prob-table" id="probTable">
+                        <thead id="probTableHead"></thead>
+                        <tbody id="probTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            &copy; Mr. M Creation
+        </footer>
+    </div>
+
+    <!-- Error Toast -->
+    <div class="toast" id="errorToast">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        <span id="errorToastText">Error</span>
+    </div>
+
+    <script>
+/* ============================================
+   MARKET PROBABILITY DASHBOARD — APP ENGINE
+   Polymarket API + Yahoo Finance via Cloudflare Worker
+   ============================================ */
+(function () {
+    'use strict';
+
+    // ── Constants ──
+    const WORKER_URL = 'https://mrmpredictor.marcohaady.workers.dev';
+    const GAMMA_API = WORKER_URL + '/polymarket';
+    const YFINANCE_API = WORKER_URL + '/yahoo';
+    const REFRESH_INTERVAL = 30000;
+    const TOP_N = 5;
+
+    // ── Asset Configuration ──
+    const ASSET_CONFIG = {
+        sp500: {
+            label: 'S&P 500', tagSlug: 'sp-500', titlePattern: /S&P\s*500|SPX/i,
+            formatPrice: (v) => '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+            icon: '📈', yfinanceTicker: 'sp500'
+        },
+        gold: {
+            label: 'Gold', tagSlug: 'gold', titlePattern: /Gold\s*GC|Gold|XAUUSD/i,
+            formatPrice: (v) => '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+            icon: '🥇', yfinanceTicker: 'gold'
+        },
+        oil: {
+            label: 'Crude Oil', tagSlug: 'oil', titlePattern: /Crude\s*Oil|Oil\s*CL|WTI/i,
+            formatPrice: (v) => '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+            icon: '🛢️', yfinanceTicker: 'oil'
+        },
+        bitcoin: {
+            label: 'Bitcoin', tagSlug: 'bitcoin', titlePattern: /Bitcoin|BTC/i,
+            formatPrice: (v) => '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}),
+            icon: '₿', yfinanceTicker: 'bitcoin'
+        }
+    };
+
+    const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const MONTH_SHORT_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const MONTH_FULL_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+    // ── State ──
+    let currentAsset = 'sp500';
+    let discoveredEvents = {};
+    let currentPrices = {};
+    let monthlyData = {};
+
+    // ── DOM References ──
+    const dom = {
+        priceAssetName: document.getElementById('priceAssetName'),
+        priceValue: document.getElementById('priceValue'),
+        priceChange: document.getElementById('priceChange'),
+        cardTitle: document.getElementById('cardTitle'),
+        probTableHead: document.getElementById('probTableHead'),
+        probTableBody: document.getElementById('probTableBody'),
+        loadingOverlay: document.getElementById('loadingOverlay'),
+        liveIndicator: document.getElementById('liveIndicator'),
+        refreshBtn: document.getElementById('refreshBtn'),
+        errorToast: document.getElementById('errorToast'),
+        errorToastText: document.getElementById('errorToastText'),
+        tableWrapper: document.getElementById('tableWrapper')
+    };
+
+    // ── API Client ──
+    async function fetchJSON(url, timeoutMs = 15000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            const response = await fetch(url, { signal: controller.signal });
+            clearTimeout(timer);
+            if (!response.ok) throw new Error('API error: ' + response.status);
+            return response.json();
+        } catch (err) { clearTimeout(timer); throw err; }
+    }
+
+    async function searchEvents(tagSlug, limit = 100) {
+        try {
+            let url = GAMMA_API + '/events?active=true&closed=false&limit=' + limit + '&order=volume&ascending=false';
+            if (tagSlug) url += '&tag_slug=' + encodeURIComponent(tagSlug);
+            return await fetchJSON(url, 8000) || [];
+        } catch { return []; }
+    }
+
+    async function fetchCurrentPrice(assetKey) {
+        try {
+            const data = await fetchJSON(YFINANCE_API + '/' + assetKey, 10000);
+            currentPrices[assetKey] = data;
+            return data;
+        } catch (err) {
+            console.warn('Price fetch failed for ' + assetKey + ':', err.message);
+            return null;
+        }
+    }
+
+    // ── Event Discovery ──
+    async function discoverEventsForAsset(assetKey) {
+        const config = ASSET_CONFIG[assetKey];
+        const found = new Map();
+
+        function processBatch(apiEvents) {
+            if (!Array.isArray(apiEvents)) return;
+            for (const evt of apiEvents) {
+                if (evt.markets && evt.markets.length > 0 && evt.endDate && config.titlePattern.test(evt.title)) {
+                    const hasNumbers = evt.markets.some(m => /\d/.test(m.groupItemTitle || m.question || ''));
+                    const indicatesPrice = /hit/i.test(evt.title);
+                    const isExcluded = /volatility|vix|market cap/i.test(evt.title);
+                    if (hasNumbers && indicatesPrice && !isExcluded) {
+                        if (!found.has(evt.slug)) found.set(evt.slug, evt);
+                    }
+                }
+            }
+        }
+
+        const searchResults = await searchEvents(config.tagSlug, 30);
+        processBatch(searchResults);
+        return Array.from(found.values());
+    }
+
+    // ── End-of-Month Aggregation ──
+    function aggregateToMonthly(events) {
+        const monthGroups = {};
+        for (const ev of events) {
+            if (!ev.endDate) continue;
+            const d = new Date(ev.endDate);
+            const adjustedDate = new Date(d.getTime() - 24 * 60 * 60 * 1000);
+            if (adjustedDate.getUTCDate() < 20) continue;
+            const key = adjustedDate.getUTCFullYear() + '-' + String(adjustedDate.getUTCMonth() + 1).padStart(2, '0');
+            if (!monthGroups[key]) monthGroups[key] = [];
+            monthGroups[key].push(ev);
+        }
+        const result = [];
+        for (const key of Object.keys(monthGroups).sort()) {
+            const evs = monthGroups[key];
+            const combinedMarkets = [];
+            for (const ev of evs) {
+                if (ev.markets) combinedMarkets.push(...ev.markets);
+            }
+            const [year, month] = key.split('-').map(Number);
+            result.push({ event: { markets: combinedMarkets }, monthKey: key, label: MONTH_FULL_EN[month - 1] + ' ' + year });
+        }
+        return result;
+    }
+
+    // ── Data Processing ──
+    function parsePrice(text) {
+        if (!text) return null;
+        
+        // Prioritize explicit currency formats (e.g. $6000)
+        const dollarMatch = text.match(/\$[\d,.]+\s*[kKmM]?/);
+        let targetText = dollarMatch ? dollarMatch[0].replace('$', '') : text;
+        
+        const matches = [...targetText.matchAll(/[\d,.]+\s*[kKmM]?/g)];
+        if (matches.length === 0) return null;
+
+        let bestNum = null;
+        for (const m of matches) {
+            const cleaned = m[0].replace(/,/g, '').replace(/\s/g, '');
+            let num = parseFloat(cleaned);
+            if (isNaN(num)) continue;
+            
+            const lower = cleaned.toLowerCase();
+            if (lower.includes('k')) num *= 1000;
+            else if (lower.includes('m')) num *= 1000000;
+            
+            // Intelligence Filter: Ignore asset names and calendar years to prevent false targets
+            if (num === 500 && /spx|s&p/i.test(text)) continue;
+            if (num >= 2024 && num <= 2035 && !dollarMatch) continue;
+            
+            bestNum = num;
+        }
+        return bestNum;
+    }
+
+    function getYesProbability(market) {
+        try {
+            if (market.outcomePrices) {
+                const prices = typeof market.outcomePrices === 'string' ? JSON.parse(market.outcomePrices) : market.outcomePrices;
+                if (prices && prices.length > 0) { const p = parseFloat(prices[0]); if (!isNaN(p)) return p; }
+            }
+        } catch {}
+        if (market.bestBid != null && market.bestAsk != null) {
+            const bid = parseFloat(market.bestBid), ask = parseFloat(market.bestAsk);
+            if (!isNaN(bid) && !isNaN(ask)) return (bid + ask) / 2;
+        }
+        if (market.lastTradePrice != null) { const p = parseFloat(market.lastTradePrice); if (!isNaN(p)) return p; }
+        return 0;
+    }
+
+    function processEventToRanges(event) {
+        const config = ASSET_CONFIG[currentAsset];
+        let markets = [];
+        for (const m of event.markets) {
+            const title = m.groupItemTitle || m.question || '';
+            const prob = getYesProbability(m);
+            let sortKey = parsePrice(title);
+            if (sortKey === null) { const match = title.match(/[\d,.]+/); sortKey = match ? parseFloat(match[0].replace(/,/g, '')) : 0; }
+            markets.push({ label: title.trim(), prob, sortKey });
+        }
+        markets.sort((a, b) => a.sortKey - b.sortKey);
+        return { columns: markets.map(m => m.label), probabilities: markets.map(m => m.prob) };
+    }
+
+
+
+    // ── Rendering ──
+    function formatPercent(p) {
+        if (p <= 0.001) return '0.0%';
+        if (p >= 0.999) return '99.9%';
+        return (p * 100).toFixed(1) + '%';
+    }
+
+    function renderPriceCard(assetKey) {
+        const config = ASSET_CONFIG[assetKey];
+        dom.priceAssetName.textContent = config.label;
+        const priceData = currentPrices[assetKey];
+        if (!priceData) {
+            dom.priceValue.textContent = '—';
+            dom.priceChange.textContent = '—';
+            dom.priceChange.className = 'price-change';
+            return;
+        }
+        dom.priceValue.textContent = config.formatPrice(priceData.price);
+        const isUp = priceData.change >= 0;
+        const arrow = isUp ? '▲' : '▼';
+        const sign = isUp ? '+' : '';
+        dom.priceChange.textContent = arrow + ' ' + sign + priceData.change.toFixed(2) + ' (' + sign + priceData.changePercent.toFixed(2) + '%)';
+        dom.priceChange.className = 'price-change ' + (isUp ? 'up' : 'down');
+    }
+
+    function renderTable(monthlyEntries) {
+        if (!monthlyEntries || monthlyEntries.length === 0) { renderNoData(); return; }
+        
+        try {
+            const currentPrice = currentPrices[currentAsset] ? currentPrices[currentAsset].price : null;
+            const monthColumns = monthlyEntries.map(entry => {
+                const rd = processEventToRanges(entry.event);
+                const ranked = rd.columns.map((col, i) => ({ label: col, prob: rd.probabilities[i], priceVal: parsePrice(col) }));
+                ranked.sort((a, b) => {
+                    const probDiff = b.prob - a.prob;
+                    if (Math.abs(probDiff) > 0.0001) return probDiff;
+                    if (currentPrice != null && a.priceVal != null && b.priceVal != null) {
+                        return Math.abs(a.priceVal - currentPrice) - Math.abs(b.priceVal - currentPrice);
+                    }
+                    return 0;
+                });
+                const uniqueRanked = [];
+                const seenProbs = new Set();
+                for (const r of ranked) {
+                    if (r.prob <= 0.001) continue;
+                    const probStr = (r.prob * 100).toFixed(1);
+                    if (!seenProbs.has(probStr)) {
+                        seenProbs.add(probStr);
+                        uniqueRanked.push(r);
+                    }
+                }
+                const topN = uniqueRanked.slice(0, TOP_N);
+                return { label: entry.label, topN, monthKey: entry.monthKey, volume: entry.volume };
+            });
+
+            let thead = '<tr><th>Peringkat</th>';
+            monthColumns.forEach(mc => {
+                thead += '<th>' + mc.label + '</th>';
+            });
+            thead += '</tr>';
+            
+            if (dom.probTableHead) dom.probTableHead.innerHTML = thead;
+
+            let tbody = '';
+            for (let rank = 0; rank < TOP_N; rank++) {
+                tbody += '<tr>';
+                const rankNum = rank + 1;
+                tbody += '<td><span class="rank-badge rank-' + rankNum + '">' + rankNum + '</span></td>';
+                monthColumns.forEach(mc => {
+                    const item = mc.topN[rank];
+                    if (item) {
+                        let cls = 'prob-cell';
+                        let displayLabel = item.label;
+
+                        if (/[↑▲]/.test(displayLabel)) {
+                            cls += ' up';
+                        } else if (/[↓▼]/.test(displayLabel)) {
+                            cls += ' down';
+                        } else if (currentPrice != null && item.priceVal != null) {
+                            if (item.priceVal > currentPrice) {
+                                cls += ' up';
+                                displayLabel = '↑ ' + displayLabel;
+                            } else if (item.priceVal < currentPrice) {
+                                cls += ' down';
+                                displayLabel = '↓ ' + displayLabel;
+                            }
+                        }
+                        
+                        let probStyle = (cls === 'prob-cell') ? 'color:var(--text-primary);' : 'color:inherit;';
+                        let finalProb = '';
+                        try { finalProb = formatPercent(item.prob); } catch(e) { finalProb = '—'; }
+                        
+                        tbody += '<td><div class="' + cls + '">' + displayLabel + '<br><strong style="' + probStyle + '">' + finalProb + '</strong></div></td>';
+                    } else {
+                        tbody += '<td><div class="prob-cell" style="background:var(--border-light);color:var(--text-tertiary)">—</div></td>';
+                    }
+                });
+                tbody += '</tr>';
+            }
+            if (dom.probTableBody) dom.probTableBody.innerHTML = tbody;
+            if (dom.cardTitle) dom.cardTitle.textContent = 'Market Probability of ' + (ASSET_CONFIG[currentAsset] ? ASSET_CONFIG[currentAsset].label : '');
+        } catch (e) {
+            console.error('Error in renderTable:', e);
+            renderNoData(); // fallback to clear table if parsing completely fails
+        }
+    }
+
+    function renderNoData() {
+        const wrapper = document.getElementById('tableWrapper');
+        if (wrapper) {
+            wrapper.innerHTML = '<div class="no-data-state" style="padding:48px 20px; text-align:center;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;margin:0 auto 12px;opacity:0.4;display:block;"><path d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><div class="no-data-text" style="font-weight:500;margin-bottom:4px;">Tidak ada data probabilitas</div><div class="no-data-sub" style="font-size:0.75rem;color:var(--text-tertiary);">Tidak ditemukan event aktif di Polymarket untuk aset ini</div></div>';
+        }
+        if (dom.cardTitle && ASSET_CONFIG[currentAsset]) {
+            dom.cardTitle.textContent = 'Market Probability of ' + ASSET_CONFIG[currentAsset].label;
+        }
+    }
+
+    // ── Loading & Error States ──
+    function showLoading() { const el = document.getElementById('loadingOverlay'); if (el) el.classList.remove('hidden'); }
+    function hideLoading() { const el = document.getElementById('loadingOverlay'); if (el) el.classList.add('hidden'); }
+    function showError(msg) { dom.errorToastText.textContent = msg; dom.errorToast.classList.add('show'); dom.liveIndicator.classList.add('error'); setTimeout(() => dom.errorToast.classList.remove('show'), 5000); }
+    function clearError() { dom.liveIndicator.classList.remove('error'); }
+
+
+
+    // ── Main Flow ──
+    function refreshDomRefs() {
+        dom.loadingOverlay = document.getElementById('loadingOverlay');
+        dom.probTableHead = document.getElementById('probTableHead');
+        dom.probTableBody = document.getElementById('probTableBody');
+        dom.tableWrapper = document.getElementById('tableWrapper');
+    }
+
+    function ensureTableStructure() {
+        const wrapper = document.getElementById('tableWrapper');
+        if (!wrapper) return;
+        if (!wrapper.querySelector('.prob-table')) {
+            wrapper.innerHTML = '<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><span class="loading-text">Mengambil data probabilitas...</span></div><table class="prob-table" id="probTable"><thead id="probTableHead"></thead><tbody id="probTableBody"></tbody></table>';
+        }
+        refreshDomRefs();
+    }
+
+    async function loadAsset(assetKey, forceRefresh = false) {
+        currentAsset = assetKey;
+        document.querySelectorAll('.asset-btn').forEach(tab => { tab.classList.toggle('active', tab.dataset.asset === assetKey); });
+        ensureTableStructure();
+        showLoading();
+        renderPriceCard(assetKey);
+        try {
+            await Promise.allSettled([
+                fetchCurrentPrice(assetKey),
+                (async () => { if (!discoveredEvents[assetKey] || forceRefresh) discoveredEvents[assetKey] = await discoverEventsForAsset(assetKey); })()
+            ]);
+            renderPriceCard(assetKey);
+            const events = discoveredEvents[assetKey];
+            if (!events || events.length === 0) { hideLoading(); renderNoData(); return; }
+            const monthly = aggregateToMonthly(events);
+            monthlyData[assetKey] = monthly;
+            renderTable(monthly);
+            clearError();
+        } catch (err) { console.error('Error loading asset:', err); showError('Gagal memuat data: ' + err.message); }
+        finally { refreshDomRefs(); hideLoading(); }
+    }
+
+    async function refreshCurrentAsset() {
+        if (dom.refreshBtn) dom.refreshBtn.classList.add('reloading');
+        try {
+            await fetchCurrentPrice(currentAsset);
+            renderPriceCard(currentAsset);
+            discoveredEvents[currentAsset] = await discoverEventsForAsset(currentAsset);
+            const events = discoveredEvents[currentAsset];
+            if (events && events.length > 0) {
+                const monthly = aggregateToMonthly(events);
+                monthlyData[currentAsset] = monthly;
+                renderTable(monthly);
+                clearError();
+            }
+        } catch (err) { console.error('Error refreshing:', err); showError('Refresh gagal: ' + err.message); }
+        finally { if (dom.refreshBtn) dom.refreshBtn.classList.remove('reloading'); }
+    }
+
+    // ── Event Listeners & Init ──
+    document.querySelectorAll('.asset-btn').forEach(tab => {
+        tab.addEventListener('click', () => { const asset = tab.dataset.asset; if (asset !== currentAsset) loadAsset(asset); });
+    });
+
+    if (dom.refreshBtn) {
+        dom.refreshBtn.addEventListener('click', () => refreshCurrentAsset());
+    }
+
+    (async function init() {
+        await loadAsset('sp500');
+    })();
+})();
+    </script>
+</body>
+</html>
